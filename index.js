@@ -7,7 +7,13 @@ require('dotenv').config();
 const app = express();
 const PORT = 5000;
 
-app.use(cors());
+const corsOptions = {
+  origin: '*', // Cho phép tất cả các domain, bạn có thể thay đổi thành một mảng các domain cụ thể nếu cần
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Các phương thức HTTP được phép
+  allowedHeaders: ['Content-Type', 'Authorization'], // Các header được phép
+};
+
+app.use(cors(corsOptions));
 
 // Middleware
 app.use(bodyParser.json());
