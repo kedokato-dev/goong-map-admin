@@ -8,9 +8,9 @@ const app = express();
 const PORT = 5000;
 
 const corsOptions = {
-  origin: '*', // Cho phép tất cả các domain, bạn có thể thay đổi thành một mảng các domain cụ thể nếu cần
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Các phương thức HTTP được phép
-  allowedHeaders: ['Content-Type', 'Authorization'], // Các header được phép
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
 app.use(cors(corsOptions));
@@ -21,8 +21,7 @@ app.use(bodyParser.json());
 // MongoDB Connection
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/locations_db';
 
-mongoose.connect(MONGO_URI, {
-})
+mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB connected successfully'))
   .catch((err) => console.error('Error connecting to MongoDB:', err));
 
@@ -31,6 +30,12 @@ const locationSchema = new mongoose.Schema({
   name: { type: String, required: true },
   latitude: { type: Number, required: true },
   longitude: { type: Number, required: true },
+  request_sender: { type: String, required: true },
+  request_type: { type: String, required: true },
+  status: { type: String, required: true },
+  number_people: { type: Number, required: true },
+  phone_number: { type: String, required: true },
+
 });
 
 const Location = mongoose.model('Location', locationSchema);
@@ -49,14 +54,15 @@ app.get('/locations', async (req, res) => {
 
 // 2. Add a new location
 app.post('/locations', async (req, res) => {
-  const { name, latitude, longitude } = req.body;
+  const { name, latitude, longitude, request_sender, request_type, status, number_people, phone_number} = req.body;
 
-  if (!name || latitude == null || longitude == null) {
-    return res.status(400).json({ message: 'All fields (name, latitude, longitude) are required' });
+  if (!name || latitude == null || longitude == null || !request_sender 
+    || !request_type || !status || !number_people || !phone_number) {
+    return res.status(400).json({ message: 'All fields are required' });
   }
 
   try {
-    const newLocation = new Location({ name, latitude, longitude });
+    const newLocation = new Location({ name, latitude, longitude, request_sender, request_type, status, number_people, phone_number });
     await newLocation.save();
     res.status(201).json({ message: 'Location added successfully', location: newLocation });
   } catch (error) {
@@ -82,12 +88,12 @@ app.get('/locations/:id', async (req, res) => {
 // 4. Update a location by ID
 app.put('/locations/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, latitude, longitude } = req.body;
+  const { name, latitude, longitude, request_sender, request_type, status, number_people, phone_number} = req.body;
 
   try {
     const updatedLocation = await Location.findByIdAndUpdate(
       id,
-      { name, latitude, longitude },
+      { name, latitude, longitude, request_sender, request_type, status, number_people, phone_number },
       { new: true, runValidators: true }
     );
 
@@ -117,9 +123,6 @@ app.delete('/locations/:id', async (req, res) => {
     res.status(500).json({ message: 'Error deleting location', error });
   }
 });
-
-
-
 
 // Start Server
 app.listen(PORT, () => {
