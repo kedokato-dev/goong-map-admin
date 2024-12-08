@@ -35,6 +35,9 @@ const locationSchema = new mongoose.Schema({
   status: { type: String, required: true },
   number_people: { type: Number, required: true },
   phone_number: { type: String, required: true },
+  date: { type: String, required: true },
+  phone_org: { type: String, required: true },
+
 
 });
 
@@ -54,15 +57,18 @@ app.get('/locations', async (req, res) => {
 
 // 2. Add a new location
 app.post('/locations', async (req, res) => {
-  const { name, latitude, longitude, request_sender, request_type, status, number_people, phone_number} = req.body;
+  const { name, latitude, longitude, request_sender, request_type, status, number_people, phone_number,
+    date, phone_org
+  } = req.body;
 
   if (!name || latitude == null || longitude == null || !request_sender 
-    || !request_type || !status || !number_people || !phone_number) {
+    || !request_type || !status || !number_people || !phone_number || !date || !phone_org) {
     return res.status(400).json({ message: 'All fields are required' });
   }
 
   try {
-    const newLocation = new Location({ name, latitude, longitude, request_sender, request_type, status, number_people, phone_number });
+    const newLocation = new Location({ name, latitude, longitude, request_sender, request_type, status, number_people, 
+      phone_number, date, phone_org});
     await newLocation.save();
     res.status(201).json({ message: 'Location added successfully', location: newLocation });
   } catch (error) {
@@ -88,12 +94,13 @@ app.get('/locations/:id', async (req, res) => {
 // 4. Update a location by ID
 app.put('/locations/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, latitude, longitude, request_sender, request_type, status, number_people, phone_number} = req.body;
+  const { name, latitude, longitude, request_sender, request_type, status, number_people, phone_number, date, phone_org} = req.body;
 
   try {
     const updatedLocation = await Location.findByIdAndUpdate(
       id,
-      { name, latitude, longitude, request_sender, request_type, status, number_people, phone_number },
+      { name, latitude, longitude, request_sender, request_type, status, number_people, 
+        phone_number, date, phone_org },
       { new: true, runValidators: true }
     );
 
@@ -123,6 +130,22 @@ app.delete('/locations/:id', async (req, res) => {
     res.status(500).json({ message: 'Error deleting location', error });
   }
 });
+
+// 6. Get locations by Phone_org
+app.get('/locations/phone_org/:phone_org', async (req, res) => {
+  const { phone_org } = req.params;
+
+  try {
+    const location = await Location.find({ phone_org }); // Tìm location theo phone_org
+    if (!location) {
+      return res.status(404).json({ message: 'Location not found' });
+    }
+    res.status(200).json(location);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching location', error });
+  }
+});
+
 
 // Start Server
 app.listen(PORT, () => {
